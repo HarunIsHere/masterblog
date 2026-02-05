@@ -22,6 +22,13 @@ def next_id(posts):
     return max(post["id"] for post in posts) + 1
 
 
+def fetch_post_by_id(posts, post_id):
+    for p in posts:
+        if p["id"] == post_id:
+            return p
+    return None
+
+
 @app.route("/")
 def index():
     blog_posts = load_posts()
@@ -60,6 +67,29 @@ def delete(post_id):
     posts = [p for p in posts if p["id"] != post_id]
     save_posts(posts)
     return redirect(url_for("index"))
+
+
+@app.route("/update/<int:post_id>", methods=["GET", "POST"])
+def update(post_id):
+    posts = load_posts()
+    post = fetch_post_by_id(posts, post_id)
+    if post is None:
+        return "Post not found", 404
+
+    if request.method == "POST":
+        author = request.form.get("author", "").strip()
+        title = request.form.get("title", "").strip()
+        content = request.form.get("content", "").strip()
+
+        if author and title and content:
+            post["author"] = author
+            post["title"] = title
+            post["content"] = content
+            save_posts(posts)
+
+        return redirect(url_for("index"))
+
+    return render_template("update.html", post=post)
 
 
 if __name__ == "__main__":
